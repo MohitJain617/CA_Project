@@ -70,7 +70,7 @@ sem_t beginSema1;
 sem_t beginSema2;
 sem_t endSema;
 
-int X;
+int X, Y;
 int r1, r2;
 
 void *thread1Func(void *param)
@@ -88,7 +88,7 @@ void *thread1Func(void *param)
 #else
         asm volatile("" ::: "memory");  // Prevent compiler reordering
 #endif
-
+        Y = 1;
         sem_post(&endSema);  // Notify transaction complete
     }
     return NULL;  // Never returns
@@ -100,10 +100,10 @@ void *thread2Func(void *param)
     for (;;)
     {
         sem_wait(&beginSema2);  // Wait for signal
-        // while (random.integer() % 8 != 0) {}  // Random delay
+        while (random.integer() % 8 != 0) {}  // Random delay
 
         // ----- THE TRANSACTION! -----
-        r1 = X;
+        r1 = Y;
 #if USE_CPU_FENCE
         asm volatile("mfence" ::: "memory");  // Prevent CPU reordering
 #else
@@ -145,6 +145,7 @@ int main()
     {
         // Reset X and Y
         X = 0;
+        Y = 0;
         // Signal both threads
         sem_post(&beginSema1);
         sem_post(&beginSema2);
