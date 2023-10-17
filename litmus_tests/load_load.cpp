@@ -1,164 +1,96 @@
+#include <iostream>
 #include <pthread.h>
+#include <random>
 #include <semaphore.h>
 #include <stdio.h>
 
-// Set either of these to 1 to prevent CPU reordering
-#define USE_CPU_FENCE              0
-#define USE_SINGLE_HW_THREAD       0  // Supported on Linux, but not Cygwin or PS3
-
-#if USE_SINGLE_HW_THREAD
-#include <sched.h>
-#endif
-
-//-------------------------------------
-//  MersenneTwister
-//  A thread-safe random number generator with good randomness
-//  in a small number of instructions. We'll use it to introduce
-//  random timing delays.
-//-------------------------------------
-#define MT_IA  397
-#define MT_LEN 624
-
-class MersenneTwister
-{
-    unsigned int m_buffer[MT_LEN];
-    int m_index;
-
-public:
-    MersenneTwister(unsigned int seed);
-    // Declare noinline so that the function call acts as a compiler barrier:
-    unsigned int integer() __attribute__((noinline));
-};
-
-MersenneTwister::MersenneTwister(unsigned int seed)
-{
-    // Initialize by filling with the seed, then iterating
-    // the algorithm a bunch of times to shuffle things up.
-    for (int i = 0; i < MT_LEN; i++)
-        m_buffer[i] = seed;
-    m_index = 0;
-    for (int i = 0; i < MT_LEN * 100; i++)
-        integer();
+// Thread safe random number generator
+int randInt(const int & min, const int & max) {
+    thread_local static std::random_device rd;
+    thread_local static std::mt19937 rng(rd());
+    thread_local std::uniform_int_distribution<int> distribution(min,max);
+    return distribution(rng);
 }
 
-unsigned int MersenneTwister::integer()
-{
-    // Indices
-    int i = m_index;
-    int i2 = m_index + 1; if (i2 >= MT_LEN) i2 = 0; // wrap-around
-    int j = m_index + MT_IA; if (j >= MT_LEN) j -= MT_LEN; // wrap-around
-
-    // Twist
-    unsigned int s = (m_buffer[i] & 0x80000000) | (m_buffer[i2] & 0x7fffffff);
-    unsigned int r = m_buffer[j] ^ (s >> 1) ^ ((s & 1) * 0x9908B0DF);
-    m_buffer[m_index] = r;
-    m_index = i2;
-
-    // Swizzle
-    r ^= (r >> 11);
-    r ^= (r << 7) & 0x9d2c5680UL;
-    r ^= (r << 15) & 0xefc60000UL;
-    r ^= (r >> 18);
-    return r;
-}
-
-
 //-------------------------------------
-//  Main program (Store Load reordering litmus test)
+//  Load Load reordering litmus test
 //-------------------------------------
-sem_t beginSema1;
-sem_t beginSema2;
-sem_t endSema;
+sem_t beginSem1;
+sem_t beginSem2;
+sem_t endSem;
 
 int X, Y;
 int r1, r2;
 
 void *thread1Func(void *param)
 {
-    MersenneTwister random(1);
     for (;;)
     {
-        sem_wait(&beginSema1);  // Wait for signal
-        while (random.integer() % 8 != 0) {}  // Random delay
+        sem_wait(&beginSem1);  // Wait for signal
+        while (randInt(0,7) != 1) {}  // Random delay
 
-        // ----- THE TRANSACTION! -----
-        X = 1;
-#if USE_CPU_FENCE
-        asm volatile("mfence" ::: "memory");  // Prevent CPU reordering
-#else
-        asm volatile("" ::: "memory");  // Prevent compiler reordering
-#endif
-        Y = 1;
-        sem_post(&endSema);  // Notify transaction complete
+        // ----- - ----- - -----
+        X = 1;  // Store X = 1
+        // ----- - ----- - -----
+
+        sem_post(&endSem);  // Notify transaction complete
     }
     return NULL;  // Never returns
 };
 
 void *thread2Func(void *param)
 {
-    MersenneTwister random(2);
     for (;;)
     {
-        sem_wait(&beginSema2);  // Wait for signal
-        while (random.integer() % 8 != 0) {}  // Random delay
+        sem_wait(&beginSem2);  // Wait for signal
+        while (randInt(0,7) != 1 ) {}  // Random delay
 
-        // ----- THE TRANSACTION! -----
-        r1 = Y;
-#if USE_CPU_FENCE
-        asm volatile("mfence" ::: "memory");  // Prevent CPU reordering
-#else
+        // ----- - ----- - -----
+        r1 = X;  // Load X -> R1
+
         asm volatile("" ::: "memory");  // Prevent compiler reordering
-#endif
-        r2 = X;
 
-        sem_post(&endSema);  // Notify transaction complete
+        r2 = X;  // Load X -> R2
+        // ----- - ----- - -----
+
+        sem_post(&endSem);  // Notify transaction complete
     }
     return NULL;  // Never returns
 };
 
-// 
-
 int main()
 {
-    // Initialize the semaphores
-    sem_init(&beginSema1, 0, 0);
-    sem_init(&beginSema2, 0, 0);
-    sem_init(&endSema, 0, 0);
+    // Initialize Semaphores, so that threads run in a syncrhonized fashion
+    sem_init(&endSem, 0, 0);
+    sem_init(&beginSem1, 0, 0);
+    sem_init(&beginSem2, 0, 0);
 
-    // Spawn the threads
+    // Spawn threads
     pthread_t thread1, thread2;
     pthread_create(&thread1, NULL, thread1Func, NULL);
     pthread_create(&thread2, NULL, thread2Func, NULL);
 
-#if USE_SINGLE_HW_THREAD
-    // Force thread affinities to the same cpu core.
-    cpu_set_t cpus;
-    CPU_ZERO(&cpus);
-    CPU_SET(0, &cpus);
-    pthread_setaffinity_np(thread1, sizeof(cpu_set_t), &cpus);
-    pthread_setaffinity_np(thread2, sizeof(cpu_set_t), &cpus);
-#endif
-
-    // Repeat the experiment ad infinitum
+    // Repeat the experiment until interrupt
     int detected = 0;
-    for (int iterations = 1; ; iterations++)
+    for (int itr = 1; ; itr++)
     {
         // Reset X and Y
-        X = 0;
-        Y = 0;
-        // Signal both threads
-        sem_post(&beginSema1);
-        sem_post(&beginSema2);
-        // Wait for both threads
-        sem_wait(&endSema);
-        sem_wait(&endSema);
-        // Check if there was a simultaneous reorder
+        X = 0; Y = 0;
+
+        // Unlock both threads
+        sem_post(&beginSem1);
+        sem_post(&beginSem2);
+
+        // Wait for threads to execute
+        sem_wait(&endSem);
+        sem_wait(&endSem);
+
+        // Check for reordering
         if (r1 == 1 && r2 == 0)
         {
             detected++;
-            printf("%d reorders detected after %d iterations\n", detected, iterations);
+			std::cout << detected <<" reorders found after " << itr << " iterations\n";
         }
     }
-    return 0;  // Never returns
+    return 0;
 }
-

@@ -4,6 +4,9 @@
 #include <semaphore.h>
 #include <stdio.h>
 
+// For introducing CPU fence to prevent reordering.
+#define CPU_FENCE              0
+
 // Thread safe random number generator
 int randInt(const int & min, const int & max) {
     thread_local static std::random_device rd;
@@ -13,7 +16,7 @@ int randInt(const int & min, const int & max) {
 }
 
 //-------------------------------------
-//  Store Load reordering litmus test
+//  Load Store reordering litmus test
 //-------------------------------------
 sem_t beginSem1;
 sem_t beginSem2;
@@ -24,17 +27,18 @@ int r1, r2;
 
 void *thread1Func(void *param)
 {
-    while (1)
+    for (;;)
     {
         sem_wait(&beginSem1);  // Wait for signal
+		int temp = randInt(0,100);
         while (randInt(0,7) != 1) {}  // Random delay
 
         // ----- - ----- - -----
-        X = 1;  // Store X=1
+        r1 = Y;  // Load Y -> R1
 
         asm volatile("" ::: "memory");  // Prevent compiler reordering
 
-        r1 = Y;  // Load Y -> R1
+        X = 1;  // Store X = 1
         // ----- - ----- - -----
 
         sem_post(&endSem);  // Notify transaction complete
@@ -44,17 +48,17 @@ void *thread1Func(void *param)
 
 void *thread2Func(void *param)
 {
-    while (1)
+    for (;;)
     {
         sem_wait(&beginSem2);  // Wait for signal
         while (randInt(0,7) != 1 ) {}  // Random delay
 
         // ----- - ----- - -----
-        Y = 1;  // Store Y = 1
+        r2 = X; // Load X -> R2
 
         asm volatile("" ::: "memory");  // Prevent compiler reordering
 
-        r2 = X; // Load X -> R2
+        Y = 1;  // Store Y = 1
         // ----- - ----- - -----
 
         sem_post(&endSem);  // Notify transaction complete
@@ -90,7 +94,7 @@ int main()
         sem_wait(&endSem);
 
         // Check for reordering
-        if (r1 == 0 && r2 == 0)
+        if (r1 == 1 && r2 == 1)
         {
             detected++;
 			std::cout << detected <<" reorders found after " << itr << " iterations\n";

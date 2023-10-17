@@ -13,7 +13,7 @@ int randInt(const int & min, const int & max) {
 }
 
 //-------------------------------------
-//  Store Load reordering litmus test
+//  Store Store reordering litmus test
 //-------------------------------------
 sem_t beginSem1;
 sem_t beginSem2;
@@ -24,42 +24,43 @@ int r1, r2;
 
 void *thread1Func(void *param)
 {
-    while (1)
+    for (;;)
     {
         sem_wait(&beginSem1);  // Wait for signal
         while (randInt(0,7) != 1) {}  // Random delay
 
         // ----- - ----- - -----
-        X = 1;  // Store X=1
+        X = 1;  // Store X = 1
 
         asm volatile("" ::: "memory");  // Prevent compiler reordering
 
-        r1 = Y;  // Load Y -> R1
+        Y = 1;  // Store Y = 1
         // ----- - ----- - -----
 
-        sem_post(&endSem);  // Notify transaction complete
+        sem_post(&endSem); 
     }
-    return NULL;  // Never returns
+    return NULL;
 };
 
 void *thread2Func(void *param)
 {
-    while (1)
+    for (;;)
     {
         sem_wait(&beginSem2);  // Wait for signal
         while (randInt(0,7) != 1 ) {}  // Random delay
 
         // ----- - ----- - -----
-        Y = 1;  // Store Y = 1
+        r1 = Y;  // Load Y -> R1
 
-        asm volatile("" ::: "memory");  // Prevent compiler reordering
+        // FENCE (to prevent load-load reordering)
+        asm volatile("mfence" ::: "memory");  // Prevent CPU reordering
 
-        r2 = X; // Load X -> R2
+        r2 = X;  // Load X -> R2
         // ----- - ----- - -----
 
-        sem_post(&endSem);  // Notify transaction complete
+        sem_post(&endSem);
     }
-    return NULL;  // Never returns
+    return NULL;
 };
 
 int main()
@@ -90,7 +91,7 @@ int main()
         sem_wait(&endSem);
 
         // Check for reordering
-        if (r1 == 0 && r2 == 0)
+        if (r1 == 1 && r2 == 0)
         {
             detected++;
 			std::cout << detected <<" reorders found after " << itr << " iterations\n";
