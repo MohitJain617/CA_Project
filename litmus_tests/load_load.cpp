@@ -19,43 +19,43 @@ sem_t beginSem1;
 sem_t beginSem2;
 sem_t endSem;
 
-int X, Y;
+int X;
 int r1, r2;
 
 void *thread1Func(void *param)
 {
-    for (;;)
+    while (1)
     {
         sem_wait(&beginSem1);  // Wait for signal
         while (randInt(0,7) != 1) {}  // Random delay
 
-        // ----- - ----- - -----
+        // *********************
         X = 1;  // Store X = 1
-        // ----- - ----- - -----
+        // *********************
 
-        sem_post(&endSem);  // Notify transaction complete
+        sem_post(&endSem);
     }
-    return NULL;  // Never returns
+    return NULL;
 };
 
 void *thread2Func(void *param)
 {
-    for (;;)
+    while (1)
     {
         sem_wait(&beginSem2);  // Wait for signal
         while (randInt(0,7) != 1 ) {}  // Random delay
 
-        // ----- - ----- - -----
+        // *********************
         r1 = X;  // Load X -> R1
 
         asm volatile("" ::: "memory");  // Prevent compiler reordering
 
         r2 = X;  // Load X -> R2
-        // ----- - ----- - -----
+        // *********************
 
-        sem_post(&endSem);  // Notify transaction complete
+        sem_post(&endSem);
     }
-    return NULL;  // Never returns
+    return NULL;
 };
 
 int main()
@@ -75,7 +75,7 @@ int main()
     for (int itr = 1; ; itr++)
     {
         // Reset X and Y
-        X = 0; Y = 0;
+        X = 0;
 
         // Unlock both threads
         sem_post(&beginSem1);

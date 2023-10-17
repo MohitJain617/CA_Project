@@ -29,13 +29,13 @@ void *thread1Func(void *param)
         sem_wait(&beginSem1);  // Wait for signal
         while (randInt(0,7) != 1) {}  // Random delay
 
-        // ----- - ----- - -----
+        // *********************
         X = 1;  // Store X = 1
 
         asm volatile("" ::: "memory");  // Prevent compiler reordering
 
         Y = 1;  // Store Y = 1
-        // ----- - ----- - -----
+        // *********************
 
         sem_post(&endSem); 
     }
@@ -49,14 +49,14 @@ void *thread2Func(void *param)
         sem_wait(&beginSem2);  // Wait for signal
         while (randInt(0,7) != 1 ) {}  // Random delay
 
-        // ----- - ----- - -----
+        // *********************
         r1 = Y;  // Load Y -> R1
 
         // FENCE (to prevent load-load reordering)
         asm volatile("mfence" ::: "memory");  // Prevent CPU reordering
 
         r2 = X;  // Load X -> R2
-        // ----- - ----- - -----
+        // *********************
 
         sem_post(&endSem);
     }

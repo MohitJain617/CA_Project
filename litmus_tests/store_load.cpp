@@ -29,17 +29,17 @@ void *thread1Func(void *param)
         sem_wait(&beginSem1);  // Wait for signal
         while (randInt(0,7) != 1) {}  // Random delay
 
-        // ----- - ----- - -----
+        // *********************
         X = 1;  // Store X=1
 
         asm volatile("" ::: "memory");  // Prevent compiler reordering
 
         r1 = Y;  // Load Y -> R1
-        // ----- - ----- - -----
+        // *********************
 
-        sem_post(&endSem);  // Notify transaction complete
+        sem_post(&endSem);
     }
-    return NULL;  // Never returns
+    return NULL;
 };
 
 void *thread2Func(void *param)
@@ -49,17 +49,17 @@ void *thread2Func(void *param)
         sem_wait(&beginSem2);  // Wait for signal
         while (randInt(0,7) != 1 ) {}  // Random delay
 
-        // ----- - ----- - -----
+        // *********************
         Y = 1;  // Store Y = 1
 
         asm volatile("" ::: "memory");  // Prevent compiler reordering
 
         r2 = X; // Load X -> R2
-        // ----- - ----- - -----
+        // *********************
 
-        sem_post(&endSem);  // Notify transaction complete
+        sem_post(&endSem);
     }
-    return NULL;  // Never returns
+    return NULL;
 };
 
 int main()

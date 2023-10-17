@@ -4,9 +4,6 @@
 #include <semaphore.h>
 #include <stdio.h>
 
-// For introducing CPU fence to prevent reordering.
-#define CPU_FENCE              0
-
 // Thread safe random number generator
 int randInt(const int & min, const int & max) {
     thread_local static std::random_device rd;
@@ -27,43 +24,43 @@ int r1, r2;
 
 void *thread1Func(void *param)
 {
-    for (;;)
+    while (1)
     {
         sem_wait(&beginSem1);  // Wait for signal
 		int temp = randInt(0,100);
         while (randInt(0,7) != 1) {}  // Random delay
 
-        // ----- - ----- - -----
+        // *********************
         r1 = Y;  // Load Y -> R1
 
         asm volatile("" ::: "memory");  // Prevent compiler reordering
 
         X = 1;  // Store X = 1
-        // ----- - ----- - -----
+        // *********************
 
-        sem_post(&endSem);  // Notify transaction complete
+        sem_post(&endSem);
     }
     return NULL;  // Never returns
 };
 
 void *thread2Func(void *param)
 {
-    for (;;)
+    while (1)
     {
         sem_wait(&beginSem2);  // Wait for signal
         while (randInt(0,7) != 1 ) {}  // Random delay
 
-        // ----- - ----- - -----
+        // *********************
         r2 = X; // Load X -> R2
 
         asm volatile("" ::: "memory");  // Prevent compiler reordering
 
         Y = 1;  // Store Y = 1
-        // ----- - ----- - -----
+        // *********************
 
-        sem_post(&endSem);  // Notify transaction complete
+        sem_post(&endSem);
     }
-    return NULL;  // Never returns
+    return NULL;
 };
 
 int main()
