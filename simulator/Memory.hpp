@@ -11,7 +11,7 @@ public:
     int load(std::string address) const;
 
 private:
-    std::unordered_map<std::string, int> memoryData;
+    std::unordered_map<std::string, int> memoryData; // storing values
 };
 
 #endif // MEMORY_HPP
