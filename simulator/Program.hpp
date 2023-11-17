@@ -2,6 +2,8 @@
 #define PROGRAM_HPP
 #include <iostream>
 #include <vector>
+#include <fstream>
+#include <string>
 
 // Load Program from text file in a format the executer can understand
 class Program {

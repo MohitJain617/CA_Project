@@ -2,6 +2,10 @@
 #define EXECUTER_HPP
 
 #include <unordered_map>
+#include <sstream>
+#include <string>
+#include <iostream>
+#include <vector>
 #include "Memory.hpp"
 #include "Program.hpp"
 
