@@ -1,12 +1,10 @@
 #include "Executer.hpp"
 
-Executer::Executer(Program& programToExecute) : program(programToExecute){
-    registers["R1"] = 0;
-    registers["R2"] = 0;
-    registers["R3"] = 0;
-    registers["R4"] = 0;
-    registers["R5"] = 0;
-    registers["R6"] = 0;
+Executer::Executer(Program& programToExecute, int eId) : program(programToExecute), executerId(eId){
+    std::vector<std::string> registerNames = {"R1", "R2", "R3", "R4", "R5", "R6"};
+    for (std::string registerName : registerNames){
+        registers[registerName] = 0;
+    }
 }
 
 void Executer::executeInstruction(std::string instruction, Memory& memory) {

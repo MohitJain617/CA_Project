@@ -1,3 +1,4 @@
-Store X R1
-Load R1 Y
+R2 = 1
+Store X R2
+Load R1 X
 

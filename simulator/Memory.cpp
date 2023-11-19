@@ -11,7 +11,7 @@ int Memory::load(std::string address) const {
     if (it != memoryData.end()) {
         return it->second;
     } else {
-        std::cerr << "Error: Attempted to load from an invalid memory address: " << address << std::endl;
-        return 0; // You may choose to handle errors differently
+        // std::cerr << "Error: Attempted to load from an invalid memory address: " << address << std::endl;
+        return 0; // Return default as 0
     }
 }
