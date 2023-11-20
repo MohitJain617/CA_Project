@@ -1,4 +1,4 @@
-R2 = 1
+R2 = 2
 Store X R2
 Load R1 X
 
