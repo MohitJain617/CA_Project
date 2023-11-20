@@ -1,0 +1,3 @@
+Load R1 Y
+R3 = 1
+Store X R3

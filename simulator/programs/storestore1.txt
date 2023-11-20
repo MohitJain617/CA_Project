@@ -1,0 +1,3 @@
+R3 = 1
+Store X R3
+Store Y R3
