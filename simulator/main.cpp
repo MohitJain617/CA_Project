@@ -9,12 +9,12 @@ int main() {
     int length;
     int idx;
     Memory memory;
-    std::vector<TsoExecuter> cores;
-    // std::vector<Tsoexecuter> cores;
-    Program program1 = Program("program1.txt");
-    cores.push_back(TsoExecuter(program1, 1));
-    Program program2 = Program("program2.txt");
-	cores.push_back(TsoExecuter(program2, 2));
+    // std::vector<TsoExecuter> cores;
+    std::vector<Executer> cores;
+    Program program1 = Program("/home/monsoon2023/abhik20165/CA_Project/simulator/program/program1.txt");
+    cores.push_back(Executer(program1, 1));
+    Program program2 = Program("/home/monsoon2023/abhik20165/CA_Project/simulator/program/program2.txt");
+	cores.push_back(Executer(program2, 2));
 
     srand(time(0));
     while(!cores.empty()){

@@ -8,9 +8,7 @@ Executer::Executer(Program& programToExecute, int eId) : program(programToExecut
 }
 
 void Executer::executeInstruction(std::string instruction, Memory& memory) {
-    // Parse instruction
-    // Execute instruction
-    // Store X R1
+    std::cout <<"Core " <<executerId << " : ";
     std::cout <<instruction <<std::endl;
     std::istringstream iss(instruction);
     std::vector<std::string> operands;

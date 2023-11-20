@@ -11,7 +11,7 @@ TsoExecuter::TsoExecuter(Program& programToExecute, int eId) : Executer(programT
 
 void TsoExecuter::executeInstructionTSO(std::vector<std::string> operands, Memory& memory){
     // Printing the instruction currently being executed.
-    std::cout << executerId << " : ";
+    std::cout <<"Core " <<executerId << " : ";
     for (std::string operand : operands){
         std::cout <<operand << " ";
     }
