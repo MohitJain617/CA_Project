@@ -11,9 +11,9 @@ int main() {
     Memory memory;
     // std::vector<TsoExecuter> cores;
     std::vector<Executer> cores;
-    Program program1 = Program("/home/monsoon2023/abhik20165/CA_Project/simulator/program/program1.txt");
+    Program program1 = Program("programs/program1.txt");
     cores.push_back(Executer(program1, 1));
-    Program program2 = Program("/home/monsoon2023/abhik20165/CA_Project/simulator/program/program2.txt");
+    Program program2 = Program("programs/program2.txt");
 	cores.push_back(Executer(program2, 2));
 
     srand(time(0));
