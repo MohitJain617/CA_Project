@@ -9,6 +9,7 @@ public:
     Memory();
     void store(std::string address, int data);
     int load(std::string address) const;
+    std::unordered_map<std::string, int> getMemoryVariables();
 
 private:
     std::unordered_map<std::string, int> memoryData; // storing values

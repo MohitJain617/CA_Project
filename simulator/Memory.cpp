@@ -6,6 +6,10 @@ void Memory::store(std::string address, int data) {
     memoryData[address] = data;
 }
 
+std::unordered_map<std::string, int> Memory:: getMemoryVariables(){
+    return memoryData;
+}
+
 int Memory::load(std::string address) const {
     auto it = memoryData.find(address);
     if (it != memoryData.end()) {

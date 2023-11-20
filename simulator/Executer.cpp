@@ -7,6 +7,10 @@ Executer::Executer(Program& programToExecute, int eId, bool verbose) : program(p
     }
 }
 
+std::unordered_map<std::string, int> Executer::getRegisters(){
+    return registers;
+}
+
 int Executer::getRegisterValue(std::string registerName){
     return registers[registerName];
 }

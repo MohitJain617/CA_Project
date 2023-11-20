@@ -16,6 +16,7 @@ public:
     virtual void executeNextInstruction(Memory& memory);
     virtual bool endOfProgram();
     int getRegisterValue(std::string registerName);
+    std::unordered_map<std::string, int> getRegisters();
 
 protected:
     void executeInstruction(std::string instruction, Memory& memory);
