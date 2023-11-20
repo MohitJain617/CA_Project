@@ -83,9 +83,11 @@ void TsoExecuter::executeStoreBuffer(Memory& memory){
 
 // Override
 void TsoExecuter::executeNextInstruction(Memory& memory) {
-    std::string nextInstruction = program.getNextInstruction();
-    readInstruction(nextInstruction, memory);
-    if(!program.hasNextInstruction()){
+    if(program.hasNextInstruction()) {
+        std::string nextInstruction = program.getNextInstruction();
+        readInstruction(nextInstruction, memory);
+    }
+    else {
         executeStoreBuffer(memory);
     }
 }

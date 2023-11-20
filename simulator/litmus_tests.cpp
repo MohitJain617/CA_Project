@@ -4,6 +4,7 @@
 #include "TsoExecuter.hpp"
 #include <vector> 
 #include "time.h"
+#include <memory>
 
 int main(int argc, char *argv[]) {
     std::string model = argv[1];
@@ -11,38 +12,51 @@ int main(int argc, char *argv[]) {
 
     int length;
     int idx;
-	int iterations = 1000; // Number of iterations
+	int iterations = 5000; // Number of iterations
 	int reorders = 0;
 	int noreorders = 0;
 	while(iterations--){
 		Memory memory;
 		// std::vector<TsoExecuter> cores;
-		std::vector<Executer> cores;
+		std::vector<std::shared_ptr<Executer>> cores;
+    	std::vector<bool> visited;
+    	visited.push_back(false);
+    	visited.push_back(false);
+    	int totalCores = 2;
+    	int completedCores = 0;
+
 		if (litmusTestType == "store_store") {
 
 			Program program1 = Program("programs/storestore1.txt");
 			Program program2 = Program("programs/storestore2.txt");
 			if (model == "TSO"){
-				cores.push_back(TsoExecuter(program1, 1, false));
-				cores.push_back(TsoExecuter(program2, 2, false));
+				cores.push_back(std::make_shared<TsoExecuter>(program1, 1, false));
+				cores.push_back(std::make_shared<TsoExecuter>(program2, 2, false));
 			} else {
-				cores.push_back(Executer(program1, 1, false));
-				cores.push_back(Executer(program2, 2, false));
+				cores.push_back(std::make_shared<Executer>(program1, 1, false));
+				cores.push_back(std::make_shared<Executer>(program2, 2, false));
 			}
-			Executer& core1 = cores[0];
-			Executer& core2 = cores[1];
 			srand(time(0));
-			while(!cores.empty()){
-				length = cores.size();
-				idx = rand() % length;
-				cores[idx].executeNextInstruction(memory);
-				if(cores[idx].endOfProgram()){
-					cores.erase(cores.begin() + idx);
+			while(completedCores < totalCores){
+				idx = rand() % (totalCores - completedCores);
+
+				int actualIdx;
+				// Iterate to the idx'th unvisited core
+				for (actualIdx = 0; actualIdx < totalCores; actualIdx++) {
+					if(visited[actualIdx] == false) {
+						if (idx == 0) break;
+						idx--;
+					}
+				}
+				cores[actualIdx]->executeNextInstruction(memory);
+				if(cores[actualIdx]->endOfProgram()){
+					visited[actualIdx] = true;
+					completedCores++;
 					// programmes.erase(programmes.begin() + idx);
 				}
 			}
 			// Check for reordering
-			if (core2.getRegisterValue("R1") == 1 && core2.getRegisterValue("R2") == 0) {
+			if (cores[1]->getRegisterValue("R1") == 1 && cores[1]->getRegisterValue("R2") == 0) {
 				reorders++;
 			} else {
 				noreorders++;
@@ -53,26 +67,34 @@ int main(int argc, char *argv[]) {
 			Program program1 = Program("programs/storeload1.txt");
 			Program program2 = Program("programs/storeload2.txt");
 			if (model == "TSO"){
-				cores.push_back(TsoExecuter(program1, 1, false));
-				cores.push_back(TsoExecuter(program2, 2, false));
+				cores.push_back(std::make_shared<TsoExecuter>(program1, 1, false));
+				cores.push_back(std::make_shared<TsoExecuter>(program2, 2, false));
 			} else {
-				cores.push_back(Executer(program1, 1, false));
-				cores.push_back(Executer(program2, 2, false));
+				cores.push_back(std::make_shared<Executer>(program1, 1, false));
+				cores.push_back(std::make_shared<Executer>(program2, 2, false));
 			}
-			Executer& core1 = cores[0];
-			Executer& core2 = cores[1];
+
 			srand(time(0));
-			while(!cores.empty()){
-				length = cores.size();
-				idx = rand() % length;
-				cores[idx].executeNextInstruction(memory);
-				if(cores[idx].endOfProgram()){
-					cores.erase(cores.begin() + idx);
+			while(completedCores < totalCores){
+				idx = rand() % (totalCores - completedCores);
+
+				int actualIdx;
+				// Iterate to the idx'th unvisited core
+				for (actualIdx = 0; actualIdx < totalCores; actualIdx++) {
+					if(visited[actualIdx] == false) {
+						if (idx == 0) break;
+						idx--;
+					}
+				}
+				cores[actualIdx]->executeNextInstruction(memory);
+				if(cores[actualIdx]->endOfProgram()){
+					visited[actualIdx] = true;
+					completedCores++;
 					// programmes.erase(programmes.begin() + idx);
 				}
 			}
 			// Check for reordering
-			if (core1.getRegisterValue("R1") == 0 && core2.getRegisterValue("R2") == 0) {
+			if (cores[0]->getRegisterValue("R1") == 0 && cores[1]->getRegisterValue("R2") == 0) {
 				reorders++;
 			} else {
 				noreorders++;
@@ -83,26 +105,33 @@ int main(int argc, char *argv[]) {
 			Program program1 = Program("programs/loadload1.txt");
 			Program program2 = Program("programs/loadload2.txt");
 			if (model == "TSO"){
-				cores.push_back(TsoExecuter(program1, 1, false));
-				cores.push_back(TsoExecuter(program2, 2, false));
+				cores.push_back(std::make_shared<TsoExecuter>(program1, 1, false));
+				cores.push_back(std::make_shared<TsoExecuter>(program2, 2, false));
 			} else {
-				cores.push_back(Executer(program1, 1, false));
-				cores.push_back(Executer(program2, 2, false));
+				cores.push_back(std::make_shared<Executer>(program1, 1, false));
+				cores.push_back(std::make_shared<Executer>(program2, 2, false));
 			}
-			Executer& core1 = cores[0];
-			Executer& core2 = cores[1];
 			srand(time(0));
-			while(!cores.empty()){
-				length = cores.size();
-				idx = rand() % length;
-				cores[idx].executeNextInstruction(memory);
-				if(cores[idx].endOfProgram()){
-					cores.erase(cores.begin() + idx);
+			while(completedCores < totalCores){
+				idx = rand() % (totalCores - completedCores);
+
+				int actualIdx;
+				// Iterate to the idx'th unvisited core
+				for (actualIdx = 0; actualIdx < totalCores; actualIdx++) {
+					if(visited[actualIdx] == false) {
+						if (idx == 0) break;
+						idx--;
+					}
+				}
+				cores[actualIdx]->executeNextInstruction(memory);
+				if(cores[actualIdx]->endOfProgram()){
+					visited[actualIdx] = true;
+					completedCores++;
 					// programmes.erase(programmes.begin() + idx);
 				}
 			}
 			// Check for reordering
-			if (core2.getRegisterValue("R1") == 1 && core2.getRegisterValue("R2") == 0) {
+			if (cores[1]->getRegisterValue("R1") == 1 && cores[1]->getRegisterValue("R2") == 0) {
 				reorders++;
 			} else {
 				noreorders++;
@@ -113,26 +142,33 @@ int main(int argc, char *argv[]) {
 			Program program1 = Program("programs/loadstore1.txt");
 			Program program2 = Program("programs/loadstore2.txt");
 			if (model == "TSO"){
-				cores.push_back(TsoExecuter(program1, 1, false));
-				cores.push_back(TsoExecuter(program2, 2, false));
+				cores.push_back(std::make_shared<TsoExecuter>(program1, 1, false));
+				cores.push_back(std::make_shared<TsoExecuter>(program2, 2, false));
 			} else {
-				cores.push_back(Executer(program1, 1, false));
-				cores.push_back(Executer(program2, 2, false));
+				cores.push_back(std::make_shared<Executer>(program1, 1, false));
+				cores.push_back(std::make_shared<Executer>(program2, 2, false));
 			}
-			Executer& core1 = cores[0];
-			Executer& core2 = cores[1];
 			srand(time(0));
-			while(!cores.empty()){
-				length = cores.size();
-				idx = rand() % length;
-				cores[idx].executeNextInstruction(memory);
-				if(cores[idx].endOfProgram()){
-					cores.erase(cores.begin() + idx);
+			while(completedCores < totalCores){
+				idx = rand() % (totalCores - completedCores);
+
+				int actualIdx;
+				// Iterate to the idx'th unvisited core
+				for (actualIdx = 0; actualIdx < totalCores; actualIdx++) {
+					if(visited[actualIdx] == false) {
+						if (idx == 0) break;
+						idx--;
+					}
+				}
+				cores[actualIdx]->executeNextInstruction(memory);
+				if(cores[actualIdx]->endOfProgram()){
+					visited[actualIdx] = true;
+					completedCores++;
 					// programmes.erase(programmes.begin() + idx);
 				}
 			}
 			// Check for reordering
-			if (core1.getRegisterValue("R1") == 1 && core2.getRegisterValue("R2") == 1) {
+			if (cores[0]->getRegisterValue("R1") == 1 && cores[1]->getRegisterValue("R2") == 1) {
 				reorders++;
 			} else {
 				noreorders++;
