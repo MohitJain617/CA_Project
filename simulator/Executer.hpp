@@ -12,16 +12,17 @@
 // Load Program from text file in a format the executer can understand
 class Executer {
 public:
-	Executer(Program& programToExecute, int executerId);
+	Executer(Program& programToExecute, int executerId, bool verbose);
     virtual void executeNextInstruction(Memory& memory);
     virtual bool endOfProgram();
-    void getRegisterValue(std::string registerName);
+    int getRegisterValue(std::string registerName);
 
 protected:
     void executeInstruction(std::string instruction, Memory& memory);
     std::unordered_map<std::string, int> registers;
 	Program program;
     int executerId;
+    bool verbose;
     // Add other program-related data members as needed
 };
 

@@ -1,7 +1,7 @@
 #include "TsoExecuter.hpp"
 
 // Initialize registers and registerDependency, along with storing program.
-TsoExecuter::TsoExecuter(Program& programToExecute, int eId) : Executer(programToExecute, eId) {
+TsoExecuter::TsoExecuter(Program& programToExecute, int eId, bool verbose) : Executer(programToExecute, eId, verbose) {
     std::vector<std::string> registerNames = {"R1", "R2", "R3", "R4", "R5", "R6"};
     for (std::string registerName : registerNames){
         registers[registerName] = 0;
@@ -11,11 +11,13 @@ TsoExecuter::TsoExecuter(Program& programToExecute, int eId) : Executer(programT
 
 void TsoExecuter::executeInstructionTSO(std::vector<std::string> operands, Memory& memory){
     // Printing the instruction currently being executed.
-    std::cout <<"Core " <<executerId << " : ";
-    for (std::string operand : operands){
-        std::cout <<operand << " ";
+    if (verbose){
+        std::cout <<"Core " <<executerId << " : ";
+        for (std::string operand : operands){
+            std::cout <<operand << " ";
+        }
+        std::cout<<"\n";
     }
-    std::cout<<"\n";
     if(operands[0] == "Store"){
         memory.store(operands[1], registers[operands[2]]);
         memoryDependency[operands[1]] = 0;

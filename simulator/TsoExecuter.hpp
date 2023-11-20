@@ -15,7 +15,7 @@
 // Load Program from text file in a format the executer can understand
 class TsoExecuter : public Executer{
 public:
-	TsoExecuter(Program& programToExecute, int executerId);
+	TsoExecuter(Program& programToExecute, int executerId, bool verbose);
     void executeNextInstruction(Memory& memory) override;
     bool endOfProgram() override;
     void executeStoreBuffer(Memory& memory);
