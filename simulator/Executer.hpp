@@ -15,6 +15,7 @@ public:
 	Executer(Program& programToExecute, int executerId);
     virtual void executeNextInstruction(Memory& memory);
     virtual bool endOfProgram();
+    void getRegisterValue(std::string registerName);
 
 protected:
     void executeInstruction(std::string instruction, Memory& memory);

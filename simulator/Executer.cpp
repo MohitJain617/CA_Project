@@ -7,6 +7,10 @@ Executer::Executer(Program& programToExecute, int eId) : program(programToExecut
     }
 }
 
+void Executer::getRegisterValue(std::string registerName){
+    return registers[registerName];
+}
+
 void Executer::executeInstruction(std::string instruction, Memory& memory) {
     std::cout <<"Core " <<executerId << " : ";
     std::cout <<instruction <<std::endl;
